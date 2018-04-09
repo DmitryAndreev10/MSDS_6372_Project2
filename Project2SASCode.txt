@@ -81,18 +81,33 @@ Run;
 Proc SGPlot Data = Train;
  Scatter y = shot_made_flag x = shot_distance;
 Run;
-   
-Proc Freq Data = Train;
- Tables shot_distance / out = t;
-Run;
 
-Proc Logistic Data = Train;
+Proc Logistic Data = Train plots(only) = (fitplot(extend = 0));
  Class shot_made_flag (ref = "0") / param = ref;
  model shot_made_flag = shot_distance / ctable clparm = Wald lackfit;
 Run;
 
 /* Lack of fit model has pvalue < 0.0001 suggesting that logit(shot_made_flag) is not lineargly related
-with shot_distance. Need to investigate how to handle the non-linaerity.
+with shot_distance. Need to investigate how to handle the non-linaerity. Looking at the probability
+versus distance graph shows us that the relationship is linear between 0ft - 40ft and begins to curve
+exponentially 40ft - 80ft  */
+   
+/* Run proc freq to see cumulative percentage of shots made with distance */  
+Proc Freq Data = Train;
+ Tables shot_distance / out = t;
+Run;
+
+/* We can see that at 30ft is 99.36 percentage of shots made so we can try to rerun logistic regression 
+against distance but limit to within 30 ft */  
+
+Proc Logistic Data = Train plots(only) = (fitplot(extend = 0));
+ Class shot_made_flag (ref = "0") / param = ref;
+ where shot_distance <= 30;
+ model shot_made_flag = shot_distance / ctable clparm = Wald lackfit;
+Run;
+
+/* Lack of fit model still has pvalue < 0.0001 suggesting that logit(shot_made_flag) is not lineargly related
+with shot_distance but graphically the model looks linear */
 
 
 /* Question 2 - probability of Kobe making a shot decreases linearly with respect to the distance he is from the hoop */
